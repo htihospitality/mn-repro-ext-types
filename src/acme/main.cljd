@@ -1,0 +1,53 @@
+(ns acme.main
+  (:require ["package:flutter/material.dart" :as m]
+            ["package:web/web.dart" :as web]
+            ["dart:ui_web" :as ui]
+            [cljd.flutter :as f]))
+
+(defn create-iframe-element!
+  "Creates an instance of an HTMLIFrameElement"
+  []
+  (let [^web/Window window web/window
+
+        ^web/Document document
+        (.-document window)
+
+        ^web/HTMLIFrameElement iframe
+        (.createElement document "iframe")]
+
+    ;; Register IFrameElement as a widget
+
+    (.registerViewFactory ui/platformViewRegistry
+                          "iframeElement"
+                          (fn [_view-id]
+                            iframe))
+
+    iframe))
+
+(defn main []
+  (f/run
+    (m/MaterialApp
+      .title "Welcome to Flutter"
+      .theme (m/ThemeData .primarySwatch m.Colors/pink))
+    .home
+    (m/Scaffold
+      .appBar (m/AppBar
+                .title (m/Text "Welcome to ClojureDart")))
+    .body
+    m/Center
+    (f/widget
+
+      :let [iframe (create-iframe-element!)]
+
+      (m/Padding .padding (m/EdgeInsets.all 8))
+      (m/Column
+        .children
+        [(m/FilledButton
+           .child (m/Text "Load test.html")
+           .onPressed #(do
+                         (.-src! ^web/HTMLIFrameElement iframe "test.html")
+                         nil))
+         (f/widget
+           m/Expanded
+           (m/HtmlElementView
+             .viewType "iframeElement"))]))))
