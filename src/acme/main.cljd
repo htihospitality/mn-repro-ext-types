@@ -4,6 +4,11 @@
             ["dart:ui_web" :as ui]
             [cljd.flutter :as f]))
 
+(defn process-event!
+  "Processes events received from an embedded iframe window"
+  [^web/MessageEvent event]
+  (prn "Received event"))
+
 (defn create-iframe-element!
   "Creates an instance of an HTMLIFrameElement"
   []
@@ -22,6 +27,11 @@
                           (fn [_view-id]
                             iframe))
 
+    ;; Listen for new events
+
+    ;; UNCOMMENT THIS TO REPRODUCE THE ERROR
+    ;; (.addEventListener window "message" process-event!)
+
     iframe))
 
 (defn main []
@@ -37,17 +47,21 @@
     m/Center
     (f/widget
 
-      :let [iframe (create-iframe-element!)]
+     :let [iframe (create-iframe-element!)]
 
-      (m/Padding .padding (m/EdgeInsets.all 8))
-      (m/Column
-        .children
-        [(m/FilledButton
-           .child (m/Text "Load test.html")
-           .onPressed #(do
-                         (.-src! ^web/HTMLIFrameElement iframe "test.html")
-                         nil))
-         (f/widget
-           m/Expanded
-           (m/HtmlElementView
-             .viewType "iframeElement"))]))))
+     :bg-watcher ([event (when iframe (.-onLoad ^web/HTMLIFrameElement iframe))]
+                  (when (and event (= "load" (.-type ^web/Event event)))
+                    (prn "IFrame loaded")))
+     
+     (m/Padding .padding (m/EdgeInsets.all 8))
+     (m/Column
+      .children
+      [(m/FilledButton
+        .child (m/Text "Load test.html")
+        .onPressed #(do
+                      (.-src! ^web/HTMLIFrameElement iframe "test.html")
+                      nil))
+       (f/widget
+        m/Expanded
+        (m/HtmlElementView
+         .viewType "iframeElement"))]))))

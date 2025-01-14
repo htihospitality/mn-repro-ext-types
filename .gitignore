@@ -58,3 +58,4 @@ test/cljd-out/
 /.lsp/
 /src/acme/.clj-kondo/
 /src/acme/.lsp/
+.calva/output-window/output.calva-repl
