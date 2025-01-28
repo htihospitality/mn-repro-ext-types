@@ -36,9 +36,16 @@
 
 
     ;; Listen for new events
-    (.addEventListener window "mousemove" (js-fn (fn [me] (prn 'mousemove))))
+    (.addEventListener window "mousemove" (js-fn (fn [me] #_(prn 'mousemove))))
 
     iframe))
+
+(defn post-message-to-iframe
+  "Sends a message to the iframe"
+  [^web/HTMLIFrameElement iframe message]
+  (when-let [^web/Window content-window (.-contentWindow iframe)]
+    (.postMessage content-window message "*")))
+
 
 (defn main []
   (f/run
@@ -58,7 +65,9 @@
      :bg-watcher ([event (-> ^web/HTMLIFrameElement iframe web/ElementEventGetters .-onLoad) ]
                   (prn 'EVENT (.-runtimeType event ))
                   (when (and event (= "load" (.-type ^web/Event event)))
-                    (prn "IFrame loaded")))
+                    
+                    ;; THIS IS THE MESSAGE PAYLOAD THAT WILL BE SENT TO THE IFRAME
+                    (post-message-to-iframe iframe {"title" "Hello from the parent Window!!"})))
 
      (m/Padding .padding (m/EdgeInsets.all 8))
      (m/Column

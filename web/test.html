@@ -1,1 +1,13 @@
 It works!
+
+<script>
+
+    // Register a listener to receive data from parent window
+
+    window.addEventListener("message", processFlutterEvent);
+
+    function processFlutterEvent (event) {
+        console.log("Received event from parent window: " + JSON.stringify(event.data));
+    }
+
+</script>
