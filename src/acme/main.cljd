@@ -1,6 +1,7 @@
 (ns acme.main
   (:require ["package:flutter/material.dart" :as m]
             ["package:web/web.dart" :as web]
+            ["dart:js_interop" :as js_interop]
             ["dart:ui_web" :as ui]
             [cljd.flutter :as f]))
 
@@ -8,6 +9,10 @@
   "Processes events received from an embedded iframe window"
   [^web/MessageEvent event]
   (prn "Received event"))
+
+(defn js-fn [^#/(web/MessageEvent -> void) f]
+  (let [f f]
+    (-> f js_interop/FunctionToJSExportedDartFunction .-toJS)))
 
 (defn create-iframe-element!
   "Creates an instance of an HTMLIFrameElement"
@@ -20,17 +25,18 @@
         ^web/HTMLIFrameElement iframe
         (.createElement document "iframe")]
 
+
     ;; Register IFrameElement as a widget
 
     (.registerViewFactory ui/platformViewRegistry
-                          "iframeElement"
-                          (fn [_view-id]
-                            iframe))
+      "iframeElement"
+      (fn [_view-id]
+        iframe))
+
+
 
     ;; Listen for new events
-
-    ;; UNCOMMENT THIS TO REPRODUCE THE ERROR
-    ;; (.addEventListener window "message" process-event!)
+    (.addEventListener window "mousemove" (js-fn (fn [me] (prn 'mousemove))))
 
     iframe))
 
@@ -48,11 +54,12 @@
     (f/widget
 
      :let [iframe (create-iframe-element!)]
-
-     :bg-watcher ([event (when iframe (.-onLoad ^web/HTMLIFrameElement iframe))]
+     ; not ideal, extension-method on extension type...
+     :bg-watcher ([event (-> ^web/HTMLIFrameElement iframe web/ElementEventGetters .-onLoad) ]
+                  (prn 'EVENT (.-runtimeType event ))
                   (when (and event (= "load" (.-type ^web/Event event)))
                     (prn "IFrame loaded")))
-     
+
      (m/Padding .padding (m/EdgeInsets.all 8))
      (m/Column
       .children
